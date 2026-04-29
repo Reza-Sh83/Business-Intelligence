@@ -1,4 +1,4 @@
-# Business Intelligence Data Pipeline
+# Business Intelligence
 
 ## تمرین اول: استخراج داده و شبیه‌سازی سیستم OLTP (پلتفرم اسنپ اکسپرس)
 
