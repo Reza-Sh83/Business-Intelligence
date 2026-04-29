@@ -116,9 +116,9 @@ if __name__ == "__main__":
     
     logger.info("Initiating I/O serialization to persistent storage.")
     
-    df_stores.to_csv("dim_stores.csv", index=False, encoding="utf-8-sig")
-    df_products.to_csv("dim_products.csv", index=False, encoding="utf-8-sig")
-    df_tickets.to_csv("fact_tickets.csv", index=False, encoding="utf-8-sig")
-    df_ticket_items.to_csv("fact_ticket_items.csv", index=False, encoding="utf-8-sig")
+    df_stores.to_csv("Data01/dim_stores.csv", index=False, encoding="utf-8-sig")
+    df_products.to_csv("Data01/dim_products.csv", index=False, encoding="utf-8-sig")
+    df_tickets.to_csv("Data01/fact_tickets.csv", index=False, encoding="utf-8-sig")
+    df_ticket_items.to_csv("Data01/fact_ticket_items.csv", index=False, encoding="utf-8-sig")
     
     logger.info("Serialization complete. Data pipeline execution terminated.")
