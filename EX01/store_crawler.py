@@ -1,50 +1,64 @@
+import time
+import random
 import requests
-import numpy as np
+import logging
 import pandas as pd
 
-
-BASE_URL = "https://apigateway.okala.com/api/Lucifer/v1/StoreRanking/GetAllStores"
-HEADERS = {
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Encoding": "gzip, deflate, br, zstd",
-    "Origin": "https://www.okala.com",
-    "Referer": "https://www.okala.com/",
-}
+# Configure granular execution tracking
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
-def build_grid(center_lat, center_lon, N, delta):
-    lat_points = np.linspace(center_lat- delta, center_lat + delta, N)
-    lon_points = np.linspace(center_lon- delta, center_lon + delta, N)
-    return [(lat, lon) for lat in lat_points for lon in lon_points]
-
-
-def fetch_store_node(lat, lon):
-    url = f"{BASE_URL}?latitude={lat}&longitude={lon}"
-    response = requests.get(url, headers=HEADERS, timeout=10)
-    try:
-        data = response.json()
-    except:
-        return []
-    stores = data.get("data", {}).get("stores", [])
-    results = []
-    for s in stores:
-        results.append({
-            "storeId": s.get("storeId"),
-            "storeName": s.get("storeName"),
-            "partnerName": s.get("partnerName"),
-            "lat": lat, 
-            "lon": lon
-            })
-    return results
-
-
-def get_okala_stores(lat, lon, N=3, delta=0.01):
-    grid = build_grid(lat, lon, N, delta)
-    all_results = []
-    for g_lat, g_lon in grid:
-        stores = fetch_store_node(g_lat, g_lon)
-        all_results.extend(stores)
-    df = pd.DataFrame(all_results)
-    if not df.empty:
-        df = df.drop_duplicates("storeId")
-    return df
+def fetch_snapp_vendors(max_pages, size):
+    HEADERS = {
+        "Accept": "application/json",
+        "Origin": "https://express.snapp.market",
+        "Referer": "https://express.snapp.market/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    }
+    vendors = []
+    logger.info("Initiating vendor extraction sequence.")
+    
+    for page in range(max_pages):
+        url = f"https://api.snapp.express/express-vendor/general/vendors-list?page={page}&page_size={size}&is_home=true&lat=35.773643&long=51.418311"
+        logger.info(f"Requesting vendors page {page}...")
+        
+        try:
+            response = requests.get(url, headers=HEADERS, timeout=15)
+            if response.status_code != 200:
+                logger.error(f"Vendor Page {page} terminated. HTTP Status: {response.status_code}. Response: {response.text[:200]}")
+                break
+                
+            data = response.json()
+            results = data.get("data", {}).get("finalResult", [])
+            
+            if not results:
+                logger.warning(f"Vendor Page {page} returned empty 'finalResult' array. Halting vendor pagination.")
+                break
+                
+            for v in results:
+                v_data = v.get("data", {})
+                vendors.append({
+                    "storeId": v_data.get("id"),
+                    "storeName": v_data.get("title"),
+                    "lat": v_data.get("lat"),
+                    "lon": v_data.get("long"),
+                    "vendor_type": v_data.get("vendor_type")
+                })
+            
+            logger.info(f"Extracted {len(results)} vendors from page {page}.")
+            time.sleep(1 + random.random())
+            
+        except Exception as e:
+            logger.error(f"Vendor extraction exception at page {page}: {str(e)}")
+            break
+            
+    df_stores = pd.DataFrame(vendors)
+    if not df_stores.empty:
+        df_stores = df_stores.drop_duplicates(subset=["storeId"])
+    
+    logger.info(f"Vendor extraction complete. Unique stores acquired: {len(df_stores)}")
+    return df_stores
