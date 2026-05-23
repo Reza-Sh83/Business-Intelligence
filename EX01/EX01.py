@@ -91,13 +91,13 @@ if __name__ == "__main__":
         exit(1)
         
     categories_to_mine = ['dairy', 'beverages', 'junk-food', 'groceries-bread', 'fruits-vegetables', 'health-beauty', 'meat-egg', 'dried-fruits-nuts']
-    df_products = fetch_snapp_products(categories=categories_to_mine, max_pages_per_category=5)
+    df_products = fetch_snapp_products(categories=categories_to_mine, max_pages_per_category=5, size=10)
     
     if df_products.empty:
         logger.critical("Failed to acquire product dimension. Pipeline terminated.")
         exit(1)
         
-    df_tickets, df_ticket_items = simulate_transactions(df_stores, df_products, num_tickets=1000, num_customers=500)
+    df_tickets, df_ticket_items = simulate_transactions(df_stores, df_products, num_tickets=500000, num_customers=50000)
     
     logger.info(f"Final output generated. df_tickets shape: {df_tickets.shape}, df_ticket_items shape: {df_ticket_items.shape}")
     
@@ -115,10 +115,4 @@ if __name__ == "__main__":
     
     
     logger.info("Initiating I/O serialization to persistent storage.")
-    
-    df_stores.to_csv("Data01/dim_stores.csv", index=False, encoding="utf-8-sig")
-    df_products.to_csv("Data01/dim_products.csv", index=False, encoding="utf-8-sig")
-    df_tickets.to_csv("Data01/fact_tickets.csv", index=False, encoding="utf-8-sig")
-    df_ticket_items.to_csv("Data01/fact_ticket_items.csv", index=False, encoding="utf-8-sig")
-    
     logger.info("Serialization complete. Data pipeline execution terminated.")
